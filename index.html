@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Narxnoma yaratuvchi (A5)</title>
+<style>
+:root{--bg:#f4f3ef;--card:#fff;--ink:#1d1d1b;--mut:#6b6a64;--line:#dcdad2;--acc:#1f6f4a;--acc2:#e8f3ed;--danger:#b3261e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:14px 12px 90px}
+.wrap{max-width:720px;margin:0 auto}
+h1{font-size:20px;margin:4px 0 2px}
+.sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h2{font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
+input,select{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--acc);border-color:transparent}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.item{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;background:#fcfcfa}
+.item .top{display:flex;gap:8px;align-items:center}
+.item .top input{flex:1}
+.num{font-size:12px;color:var(--mut);min-width:18px;text-align:center}
+.sum{font-weight:600;text-align:right;margin-top:8px}
+button{font:inherit;border:0;border-radius:10px;padding:11px 14px;cursor:pointer}
+.btn{background:var(--acc);color:#fff;font-weight:600}
+.btn2{background:var(--acc2);color:var(--acc);font-weight:600}
+.btn3{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.del{background:transparent;color:var(--danger);padding:6px 10px;font-size:20px;line-height:1}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.total{display:flex;justify-content:space-between;font-size:17px;font-weight:700;padding-top:6px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(244,243,239,.95);border-top:1px solid var(--line);padding:10px 12px;backdrop-filter:blur(6px)}
+.bar .in{max-width:720px;margin:0 auto;display:flex;gap:8px}
+.bar .btn{flex:1}
+.msg{font-size:13px;color:var(--mut);margin-top:6px;min-height:18px}
+/* preview */
+.sheet{background:#fff;border:1px solid var(--line);border-radius:4px;padding:5% 6%;aspect-ratio:148/210;max-width:420px;margin:0 auto;font-size:clamp(7px,2.1vw,10px);overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.sheet h3{text-align:center;font-size:1.7em;margin:.4em 0 .1em}
+.sheet .d{text-align:center;margin-bottom:.8em}
+.sheet table{width:100%;border-collapse:collapse;font-size:1em}
+.sheet th,.sheet td{border:1px solid #333;padding:.35em .4em}
+.sheet th{background:#e9e9e9}
+.sheet td.r{text-align:right;white-space:nowrap}.sheet td.c{text-align:center}
+.sheet .firm b{font-size:1.2em}
+.sheet .big{text-align:right;font-weight:700;font-size:1.3em;margin-top:.8em}
+.sheet .party{margin:.6em 0}
+.vok{border-left:5px solid var(--acc)}.vbad{border-left:5px solid var(--danger)}
+.vt{width:100%;border-collapse:collapse;font-size:13px}.vt th,.vt td{border:1px solid var(--line);padding:6px 7px;text-align:left}.vt td.r{text-align:right;white-space:nowrap}.vt th{background:#f0efe9}
+</style>
+</head>
+<body>
+<div class="wrap" id="vview" style="display:none"></div>
+<div class="wrap" id="app">
+  <h1>Narxnoma yaratuvchi</h1>
+  <div class="sub">Mahsulot, soni va narxni kiriting — summa va jami o'zi hisoblanadi. Natija A5 PDF.</div>
+
+  <div class="card">
+    <h2>Hujjat</h2>
+    <div class="g3">
+      <div><label>Turi</label>
+        <select id="dtype"><option>NARXNOMA</option><option>HISOB-KITOB</option><option>TAKLIF</option></select></div>
+      <div><label>Raqami (ixtiyoriy)</label><input id="dno" placeholder="masalan 12"></div>
+      <div><label>Sana</label><input id="ddate" type="date"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Mening firmam (ixtiyoriy)</h2>
+    <label>Firma nomi</label><input id="fname" placeholder="Firma nomi">
+    <div class="g2">
+      <div><label>Telefon</label><input id="fphone" inputmode="tel" placeholder="+998 ..."></div>
+      <div><label>Manzil</label><input id="faddr" placeholder="Manzil"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Xaridor (ixtiyoriy)</h2>
+    <label>Ismi</label><input id="cname" placeholder="Xaridor ismi">
+    <div class="g2">
+      <div><label>Telefon</label><input id="cphone" inputmode="tel" placeholder="+998 ..."></div>
+      <div><label>Manzil</label><input id="caddr" placeholder="Manzil"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Mahsulotlar</h2>
+    <div id="items"></div>
+    <div class="row"><button class="btn2" id="add">+ Mahsulot qo'shish</button></div>
+    <div class="total" style="margin-top:12px"><span>Jami:</span><span id="tot">0</span></div>
+    <div style="color:var(--mut);font-size:12px;margin-top:6px">Kiritgan mahsulot nomlari va narxlari shu brauzerda eslab qolinadi.</div>
+  </div>
+
+  <div class="card">
+    <h2>Ko'rinishi (A5)</h2>
+    <div class="sheet" id="sheet"></div>
+    <div style="color:var(--mut);font-size:12px;margin-top:8px;text-align:center">PDF'da pastda QR kod, tekshiruv kodi, imzo va muhr uchun joy chiqadi.</div>
+  </div>
+
+  <div class="card">
+    <h2>Egasi uchun kirish</h2>
+    <div style="color:var(--mut);font-size:12px">Hujjatlarni saytda saqlash (QR tekshiruvi uchun) faqat egasi kirganda ishlaydi.</div>
+    <label>Email</label><input id="lemail" type="email" autocomplete="username">
+    <label>Parol</label><input id="lpass" type="password" autocomplete="current-password">
+    <div class="row" style="margin-top:10px"><button class="btn2" id="lbtn">Kirish</button></div>
+    <div class="msg" id="lstat"></div>
+  </div>
+
+  <div class="card">
+    <h2>Hujjatni tekshirish</h2>
+    <label>Tekshiruv kodi (masalan K7M2QX9P)</label>
+    <div class="row"><input id="chk" placeholder="Kodni kiriting" style="flex:1" autocapitalize="characters"><button class="btn2" id="chkbtn">Tekshirish</button></div>
+  </div>
+</div>
+
+<div class="bar" id="bar"><div class="in">
+  <button class="btn3" id="reset">Tozalash</button>
+  <button class="btn" id="pdf">A5 PDF yuklab olish</button>
+</div><div class="msg" id="msg" style="max-width:720px;margin:4px auto 0"></div></div>
+
+<datalist id="prods"></datalist>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+var CFG={url:"SUPABASE_URL_BU_YERGA",key:"SUPABASE_KALIT_BU_YERGA"}; // README / sozlash qo'llanmasiga qarang
+var CFG_OK=CFG.url.indexOf("https://")===0&&CFG.key.indexOf("BU_YERGA")<0;
+var TOKEN=null;try{TOKEN=sessionStorage.getItem("nn_tok")}catch(e){}
+function hdr(tok){var h={"apikey":CFG.key,"Content-Type":"application/json"};var b=tok||(CFG.key.indexOf("eyJ")===0?CFG.key:null);if(b)h["Authorization"]="Bearer "+b;return h}
+var $=function(id){return document.getElementById(id)};
+var KEY="narxnoma_v1";
+var UNITS=["dona","metr","kg","m2","m3","litr","komplekt","qop","rulon"];
+var DEFAULT_ITEMS=[
+ {name:"Gips Oq Devor Forever",unit:"dona",qty:35,price:60000},
+ {name:"43x2x4 belyar reka",unit:"metr",qty:320,price:5000},
+ {name:"7x35x3 yuxta perekarotka 3 metr reka",unit:"metr",qty:180,price:13000},
+ {name:"5li samarez mexmash.",unit:"kg",qty:2,price:35000},
+ {name:"3li samarez mexmash.",unit:"kg",qty:5,price:35000},
+ {name:"knaf rulon-16.6kv",unit:"dona",qty:1,price:195000},
+ {name:"Padves vero",unit:"dona",qty:100,price:1300}
+];
+var S={dtype:"NARXNOMA",dno:"",ddate:"",fname:"",fphone:"",faddr:"",cname:"",cphone:"",caddr:"",items:DEFAULT_ITEMS.slice().map(function(x){return Object.assign({},x)}),prods:{}};
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);Object.keys(S).forEach(function(k){if(p[k]!==undefined)S[k]=p[k]})}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+if(!S.ddate)S.ddate=today();
+function fmt(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g," ")}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function dstr(v){if(!v)return"";var a=v.split("-");return a.length===3?a[2]+"."+a[1]+"."+a[0]:v}
+function total(){return S.items.reduce(function(s,i){return s+(+i.qty||0)*(+i.price||0)},0)}
+
+var fields=["dtype","dno","ddate","fname","fphone","faddr","cname","cphone","caddr"];
+fields.forEach(function(f){var el=$(f);el.value=S[f];el.addEventListener("input",function(){S[f]=el.value;save();preview()})});
+
+function rememberProd(it){if(it.name&&(+it.price)>0){S.prods[it.name.trim()]={unit:it.unit,price:+it.price}}}
+function fillDatalist(){$("prods").innerHTML=Object.keys(S.prods).map(function(n){return'<option value="'+esc(n)+'">'}).join("")}
+
+function renderItems(){
+  var box=$("items");box.innerHTML="";
+  S.items.forEach(function(it,idx){
+    var d=document.createElement("div");d.className="item";
+    d.innerHTML='<div class="top"><span class="num">'+(idx+1)+'</span><input list="prods" data-k="name" placeholder="Mahsulot nomi" value="'+esc(it.name)+'"><button class="del" title="O\'chirish">&times;</button></div>'+
+    '<div class="g3"><div><label>Birlik</label><select data-k="unit">'+UNITS.map(function(u){return'<option'+(u===it.unit?" selected":"")+'>'+u+'</option>'}).join("")+'</select></div>'+
+    '<div><label>Soni</label><input data-k="qty" inputmode="decimal" value="'+esc(it.qty)+'"></div>'+
+    '<div><label>Narxi</label><input data-k="price" inputmode="decimal" value="'+esc(it.price)+'"></div></div>'+
+    '<div class="sum">Summa: <span>'+fmt((+it.qty||0)*(+it.price||0))+'</span></div>';
+    var sumEl=d.querySelector(".sum span");
+    d.querySelectorAll("[data-k]").forEach(function(el){
+      var k=el.getAttribute("data-k");
+      el.addEventListener("input",function(){
+        it[k]=(k==="qty"||k==="price")?(el.value.replace(",",".")===""?"":parseFloat(el.value.replace(",","."))||0):el.value;
+        sumEl.textContent=fmt((+it.qty||0)*(+it.price||0));updateTotal();save();preview()});
+      if(k==="name")el.addEventListener("change",function(){
+        var m=S.prods[el.value.trim()];
+        if(m&&!(+it.price)){it.price=m.price;it.unit=m.unit;renderItems();updateTotal();save();preview()}
+      });
+      if(k!=="name")el.addEventListener("change",function(){rememberProd(it);fillDatalist();save()});
+    });
+    d.querySelector(".del").addEventListener("click",function(){S.items.splice(idx,1);renderItems();updateTotal();save();preview()});
+    box.appendChild(d);
+  });
+}
+function updateTotal(){$("tot").textContent=fmt(total())+" so'm"}
+
+$("add").addEventListener("click",function(){S.items.push({name:"",unit:"dona",qty:1,price:""});renderItems();save();preview();
+  var inputs=document.querySelectorAll('#items [data-k="name"]');if(inputs.length)inputs[inputs.length-1].focus()});
+
+$("reset").addEventListener("click",function(){
+  if(!$("reset").dataset.sure){$("reset").dataset.sure="1";$("reset").textContent="Ishonchingiz komilmi? Yana bosing";
+    setTimeout(function(){delete $("reset").dataset.sure;$("reset").textContent="Tozalash"},3500);return}
+  delete $("reset").dataset.sure;$("reset").textContent="Tozalash";
+  S.items=[{name:"",unit:"dona",qty:1,price:""}];S.cname="";S.cphone="";S.caddr="";S.dno="";
+  ["cname","cphone","caddr","dno"].forEach(function(f){$(f).value=""});
+  renderItems();updateTotal();save();preview();
+});
+
+function preview(){
+  var rows=S.items.filter(function(i){return i.name||(+i.price)}).map(function(i,n){
+    return"<tr><td class='c'>"+(n+1)+"</td><td>"+esc(i.name)+"</td><td class='c'>"+esc(i.unit)+"</td><td class='c'>"+esc(i.qty)+"</td><td class='r'>"+fmt(+i.price||0)+"</td><td class='r'>"+fmt((+i.qty||0)*(+i.price||0))+"</td></tr>"}).join("");
+  var h="";
+  if(S.fname||S.fphone||S.faddr)h+="<div class='firm'>"+(S.fname?"<b>"+esc(S.fname)+"</b><br>":"")+(S.fphone?"Tel: "+esc(S.fphone)+"<br>":"")+(S.faddr?esc(S.faddr):"")+"</div>";
+  h+="<h3>"+esc(S.dtype)+(S.dno?" № "+esc(S.dno):"")+"</h3><div class='d'>"+esc(dstr(S.ddate))+"</div>";
+  if(S.cname||S.cphone||S.caddr)h+="<div class='party'>Xaridor: "+esc(S.cname)+(S.cphone?"<br>Tel: "+esc(S.cphone):"")+(S.caddr?"<br>Manzil: "+esc(S.caddr):"")+"</div>";
+  h+="<table><tr><th>№</th><th>Mahsulot</th><th>Birlik</th><th>Soni</th><th>Narxi</th><th>Summa</th></tr>"+rows+
+     "<tr><th></th><th style='text-align:left'>Jami:</th><th></th><th></th><th></th><th style='text-align:right'>"+fmt(total())+"</th></tr></table>"+
+     "<div class='big'>Jami summa: "+fmt(total())+" so'm</div>";
+  $("sheet").innerHTML=h;
+}
+
+function msg(t){$("msg").textContent=t||""}
+function clean(s){return String(s==null?"":s).replace(/[‘’ʻʼ`]/g,"'")}
+
+function pageUrl(){return location.href.split("#")[0]}
+function newId(){var a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",s="";var r=new Uint32Array(8);crypto.getRandomValues(r);for(var i=0;i<8;i++)s+=a[r[i]%a.length];return s}
+function buildPdf(rid){
+  var J=window.jspdf&&window.jspdf.jsPDF;if(!J)throw new Error("PDF kutubxonasi yuklanmadi");
+  var doc=new J({unit:"mm",format:"a5",orientation:"portrait"});
+  var L=10,R=148-10,y=14;
+  if(S.fname){doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text(clean(S.fname),L,y);y+=5}
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);
+  if(S.fphone){doc.text("Tel: "+clean(S.fphone),L,y);y+=4}
+  if(S.faddr){doc.text(clean(S.faddr),L,y);y+=4}
+  if(S.fname||S.fphone||S.faddr)y+=3;else y=18;
+  doc.setFont("helvetica","bold");doc.setFontSize(15);
+  doc.text(clean(S.dtype)+(S.dno?" No "+clean(S.dno):""),74,y,{align:"center"});y+=5;
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);
+  doc.text(dstr(S.ddate),74,y,{align:"center"});y+=6;
+  if(S.cname||S.cphone||S.caddr){
+    var lines=[];if(S.cname)lines.push("Xaridor: "+clean(S.cname));if(S.cphone)lines.push("Tel: "+clean(S.cphone));if(S.caddr)lines.push("Manzil: "+clean(S.caddr));
+    lines.forEach(function(l){doc.text(l,L,y);y+=4});y+=2;
+  }
+  var body=S.items.filter(function(i){return i.name||(+i.price)}).map(function(i,n){
+    return[String(n+1),clean(i.name),clean(i.unit),String(i.qty===""?"":i.qty),fmt(+i.price||0),fmt((+i.qty||0)*(+i.price||0))]});
+  doc.autoTable({startY:y,margin:{left:L,right:148-R},
+    head:[["No","Mahsulot","Birlik","Soni","Narxi","Summa"]],body:body,
+    foot:[["","Jami:","","","",fmt(total())]],
+    theme:"grid",styles:{font:"helvetica",fontSize:8,cellPadding:1.8,textColor:20,lineColor:60,lineWidth:.2,valign:"middle"},
+    headStyles:{fillColor:[230,230,230],textColor:20,fontStyle:"bold",halign:"center"},
+    footStyles:{fillColor:[230,230,230],textColor:20,fontStyle:"bold",halign:"right"},
+    columnStyles:{0:{cellWidth:8,halign:"center"},1:{cellWidth:"auto"},2:{cellWidth:15,halign:"center"},3:{cellWidth:13,halign:"center"},4:{cellWidth:20,halign:"right"},5:{cellWidth:23,halign:"right"}},
+    didParseCell:function(d){if(d.section==="foot"&&d.column.index===1)d.cell.styles.halign="left"}
+  });
+  var ey=doc.lastAutoTable.finalY+7;
+  if(ey>150){doc.addPage();ey=16}
+  doc.setFont("helvetica","bold");doc.setFontSize(11);
+  doc.text("Jami summa: "+fmt(total())+" so'm",R,ey,{align:"right"});
+  // imzo va muhr
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);
+  var sy=ey+14;
+  doc.text("Sotuvchi imzosi: ____________________",L,sy);
+  doc.text("M.O.",R-12,sy);
+  doc.setDrawColor(150);doc.setLineWidth(.2);doc.circle(R-22,sy+2,10);
+  // QR + tekshiruv kodi (sahifa pastida)
+  if(rid&&window.qrcode){
+    var qr=window.qrcode(0,"M");qr.addData(pageUrl()+"#check-"+rid);qr.make();
+    var n=qr.getModuleCount(),size=24,cs=size/n,qx=L,qy=210-10-size-2;
+    doc.setFillColor(0,0,0);
+    for(var r=0;r<n;r++)for(var c=0;c<n;c++)if(qr.isDark(r,c))doc.rect(qx+c*cs,qy+r*cs,cs+.02,cs+.02,"F");
+    doc.setFont("helvetica","bold");doc.setFontSize(9);
+    doc.text("Tekshiruv kodi: "+rid,qx+size+4,qy+9);
+    doc.setFont("helvetica","normal");doc.setFontSize(7);
+    doc.text("QR kodni skaner qiling: asl narxnoma ma'lumotlari ochiladi.",qx+size+4,qy+13);
+    doc.text("Qog'ozdagi ma'lumot bilan mos kelmasa, hujjat o'zgartirilgan.",qx+size+4,qy+16.5);
+  }
+  // suv belgisi (watermark)
+  var wm=clean(S.fname||"");
+  var pages=doc.getNumberOfPages();
+  if(wm){
+    for(var pg=1;pg<=pages;pg++){
+      doc.setPage(pg);
+      try{doc.setGState(new doc.GState({opacity:0.09}))}catch(e){}
+      doc.setTextColor(0);doc.setFont("helvetica","bold");doc.setFontSize(34);
+      doc.text(wm,74,110,{align:"center",angle:35});
+      try{doc.setGState(new doc.GState({opacity:1}))}catch(e){}
+    }
+  }
+  return doc;
+}
+
+async function doLogin(){
+  var e=$("lemail").value.trim(),p=$("lpass").value;
+  var r=await fetch(CFG.url+"/auth/v1/token?grant_type=password",{method:"POST",headers:hdr(null),body:JSON.stringify({email:e,password:p})});
+  var j=await r.json();
+  if(!r.ok)throw new Error(j.error_description||j.msg||"Kirish muvaffaqiyatsiz");
+  TOKEN=j.access_token;try{sessionStorage.setItem("nn_tok",TOKEN)}catch(x){}
+}
+$("lbtn").addEventListener("click",async function(){
+  $("lstat").textContent="";
+  if(!CFG_OK){$("lstat").textContent="Avval sayt sozlanmagan (SUPABASE kalitlari kiritilmagan).";return}
+  try{await doLogin();$("lstat").textContent="Kirdingiz. Endi hujjatlar saqlanadi.";$("lpass").value=""}catch(e){$("lstat").textContent="Xato: "+e.message}
+});
+if(TOKEN)$("lstat").textContent="Kirgansiz.";
+async function saveRecord(rec){
+  if(!CFG_OK||!TOKEN)return false;
+  var r=await fetch(CFG.url+"/rest/v1/docs",{method:"POST",headers:Object.assign(hdr(TOKEN),{"Prefer":"return=minimal"}),body:JSON.stringify({id:rec.id,data:rec})});
+  if(r.status===401){TOKEN=null;try{sessionStorage.removeItem("nn_tok")}catch(x){}}
+  return r.ok;
+}
+$("pdf").addEventListener("click",async function(){
+  msg("");
+  var doc,rid=newId(),stored=false;
+  var rec={id:rid,type:S.dtype,no:S.dno,date:S.ddate,firm:{name:S.fname,phone:S.fphone,addr:S.faddr},
+    client:{name:S.cname,phone:S.cphone,addr:S.caddr},
+    items:S.items.filter(function(i){return i.name||(+i.price)}).map(function(i){return{name:String(i.name||""),unit:String(i.unit||""),qty:+i.qty||0,price:+i.price||0}}),
+    total:total(),createdAt:new Date().toISOString()};
+  try{stored=await saveRecord(rec)}catch(e){stored=false}
+  try{doc=buildPdf(stored?rid:null)}catch(e){msg("Xatolik: "+e.message);return}
+  var fname="narxnoma_"+(S.ddate||today())+(stored?"_"+rid:"")+".pdf";
+  try{doc.save(fname)}catch(e){msg("Yuklab bo'lmadi: "+e.message);return}
+  msg(stored?"Tayyor va saytda saqlandi: "+fname:"PDF tayyor, lekin saytda SAQLANMADI (QR kodsiz). Yuqoridagi \"Kirish\" bo'limidan kiring va qayta urinib ko'ring.");
+});
+
+// ---- tekshiruv sahifasi ----
+function unwrap(r){
+  if(!r)return null;
+  var ex=(typeof r.exists==="function")?r.exists():r.exists;
+  if(ex===false)return null;
+  var d=(typeof r.data==="function")?r.data():(r.data!==undefined?r.data:r);
+  return (d&&typeof d==="object"&&d.items)?d:null;
+}
+async function showVerify(id){
+  var v=$("vview");
+  v.innerHTML='<div class="card"><h2>Hujjatni tekshirish</h2><div>Yuklanmoqda...</div></div>';
+  var rec=null,err=false;
+  try{
+    if(!CFG_OK)err=true;else{
+      var r=await fetch(CFG.url+"/rest/v1/rpc/get_doc",{method:"POST",headers:hdr(null),body:JSON.stringify({p_id:id})});
+      if(!r.ok)err=true;else{var j=await r.json();rec=(j&&j.items)?j:null}
+    }
+  }catch(e){err=true}
+  var back='<div style="margin-top:12px"><button class="btn3" id="vback">&larr; Orqaga</button></div>';
+  if(err){v.innerHTML='<div class="card vbad"><h2>Tekshirish</h2><div>Ma\'lumotlar bazasiga ulanib bo\'lmadi. Keyinroq urinib ko\'ring.</div>'+back+'</div>'}
+  else if(!rec){v.innerHTML='<div class="card vbad"><h2>Tekshirish</h2><div><b>Bunday hujjat topilmadi:</b> '+esc(id)+'<br>Kod noto\'g\'ri yoki hujjat bu saytdan chiqarilmagan.</div>'+back+'</div>'}
+  else{
+    var rows=rec.items.map(function(i,n){return"<tr><td>"+(n+1)+"</td><td>"+esc(i.name)+"</td><td>"+esc(i.unit)+"</td><td class='r'>"+esc(i.qty)+"</td><td class='r'>"+fmt(i.price)+"</td><td class='r'>"+fmt(i.qty*i.price)+"</td></tr>"}).join("");
+    var firm=rec.firm&&(rec.firm.name||rec.firm.phone||rec.firm.addr)?"<div>"+esc([rec.firm.name,rec.firm.phone,rec.firm.addr].filter(Boolean).join(", "))+"</div>":"";
+    var cl=rec.client&&(rec.client.name||rec.client.phone||rec.client.addr)?"<div>Xaridor: "+esc([rec.client.name,rec.client.phone,rec.client.addr].filter(Boolean).join(", "))+"</div>":"";
+    v.innerHTML='<div class="card vok"><h2>Hujjat topildi</h2><div style="font-size:13px;color:var(--mut);margin-bottom:8px">Quyidagi ma\'lumotlarni qog\'ozdagi nusxa bilan solishtiring. Mos kelmasa, qog\'oz o\'zgartirilgan.</div>'+
+      '<div><b>'+esc(rec.type)+(rec.no?" № "+esc(rec.no):"")+'</b> &middot; '+esc(dstr(rec.date))+' &middot; kod: '+esc(rec.id)+'</div>'+firm+cl+
+      '<div style="overflow-x:auto;margin-top:10px"><table class="vt"><tr><th>№</th><th>Mahsulot</th><th>Birlik</th><th>Soni</th><th>Narxi</th><th>Summa</th></tr>'+rows+'</table></div>'+
+      '<div class="total" style="margin-top:10px"><span>Jami:</span><span>'+fmt(rec.total)+' so\'m</span></div>'+back+'</div>';
+  }
+  var b=$("vback");if(b)b.addEventListener("click",function(){location.hash="";route()});
+}
+function route(){
+  var h=(location.hash||"").replace(/^#/,"");
+  var m=/^check-([A-Za-z0-9]{4,16})$/.exec(h);
+  if(m){$("app").style.display="none";$("bar").style.display="none";$("vview").style.display="";showVerify(m[1].toUpperCase())}
+  else{$("vview").style.display="none";$("app").style.display="";$("bar").style.display=""}
+}
+window.addEventListener("hashchange",route);
+$("chkbtn").addEventListener("click",function(){var v=$("chk").value.trim().replace(/[^A-Za-z0-9]/g,"");if(v)location.hash="check-"+v});
+
+fillDatalist();Object.keys(S.prods).length||DEFAULT_ITEMS.forEach(function(i){S.prods[i.name]={unit:i.unit,price:i.price}});fillDatalist();
+renderItems();updateTotal();preview();route();
+})();
+</script>
+</body>
+</html>
