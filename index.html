@@ -57,12 +57,13 @@ button{font:inherit;border:0;border-radius:10px;padding:11px 14px;cursor:pointer
 
   <div class="card">
     <h2>Hujjat</h2>
-    <div class="g3">
+    <div class="g2">
       <div><label>Turi</label>
         <select id="dtype"><option>NARXNOMA</option><option>HISOB-KITOB</option><option>TAKLIF</option></select></div>
       <div><label>Raqami (ixtiyoriy)</label><input id="dno" placeholder="masalan 12"></div>
-      <div><label>Sana</label><input id="ddate" type="date"></div>
     </div>
+    <label>Sana (o'zingiz yozasiz)</label>
+    <div class="row"><input id="ddate" placeholder="masalan 19.11.2026" autocomplete="off" style="flex:1;min-width:0"><button class="btn3" id="dtoday" type="button">Bugun</button></div>
   </div>
 
   <div class="card">
@@ -144,15 +145,17 @@ var DEFAULT_ITEMS=[
 var S={dtype:"NARXNOMA",dno:"",ddate:"",fname:"",fphone:"",faddr:"",cname:"",cphone:"",caddr:"",items:DEFAULT_ITEMS.slice().map(function(x){return Object.assign({},x)}),prods:{}};
 try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);Object.keys(S).forEach(function(k){if(p[k]!==undefined)S[k]=p[k]})}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function dstr(v){if(!v)return"";var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v);return m?m[3]+"."+m[2]+"."+m[1]:v}
+function today(){var d=new Date();return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear()}
+if(/^\d{4}-\d{2}-\d{2}$/.test(S.ddate||""))S.ddate=dstr(S.ddate); // eski (kalendar) formatini o'tkazish
 if(!S.ddate)S.ddate=today();
 function fmt(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g," ")}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function dstr(v){if(!v)return"";var a=v.split("-");return a.length===3?a[2]+"."+a[1]+"."+a[0]:v}
 function total(){return S.items.reduce(function(s,i){return s+(+i.qty||0)*(+i.price||0)},0)}
 
 var fields=["dtype","dno","ddate","fname","fphone","faddr","cname","cphone","caddr"];
 fields.forEach(function(f){var el=$(f);el.value=S[f];el.addEventListener("input",function(){S[f]=el.value;save();preview()})});
+$("dtoday").addEventListener("click",function(){S.ddate=today();$("ddate").value=S.ddate;save();preview()});
 
 function rememberProd(it){if(it.name&&(+it.price)>0){S.prods[it.name.trim()]={unit:it.unit,price:+it.price}}}
 function fillDatalist(){$("prods").innerHTML=Object.keys(S.prods).map(function(n){return'<option value="'+esc(n)+'">'}).join("")}
@@ -227,7 +230,7 @@ function buildPdf(rid){
   doc.setFont("helvetica","bold");doc.setFontSize(15);
   doc.text(clean(S.dtype)+(S.dno?" No "+clean(S.dno):""),74,y,{align:"center"});y+=5;
   doc.setFont("helvetica","normal");doc.setFontSize(8.5);
-  doc.text(dstr(S.ddate),74,y,{align:"center"});y+=6;
+  doc.text(clean(dstr(S.ddate)),74,y,{align:"center"});y+=6;
   if(S.cname||S.cphone||S.caddr){
     var lines=[];if(S.cname)lines.push("Xaridor: "+clean(S.cname));if(S.cphone)lines.push("Tel: "+clean(S.cphone));if(S.caddr)lines.push("Manzil: "+clean(S.caddr));
     lines.forEach(function(l){doc.text(l,L,y);y+=4});y+=2;
@@ -308,7 +311,7 @@ $("pdf").addEventListener("click",async function(){
     total:total(),createdAt:new Date().toISOString()};
   try{stored=await saveRecord(rec)}catch(e){stored=false}
   try{doc=buildPdf(stored?rid:null)}catch(e){msg("Xatolik: "+e.message);return}
-  var fname="narxnoma_"+(S.ddate||today())+(stored?"_"+rid:"")+".pdf";
+  var fname="narxnoma_"+(String(S.ddate||today()).replace(/[^0-9A-Za-z]+/g,"-").replace(/^-|-$/g,"")||"hujjat")+(stored?"_"+rid:"")+".pdf";
   try{doc.save(fname)}catch(e){msg("Yuklab bo'lmadi: "+e.message);return}
   msg(stored?"Tayyor va saytda saqlandi: "+fname:"PDF tayyor, lekin saytda SAQLANMADI (QR kodsiz). Yuqoridagi \"Kirish\" bo'limidan kiring va qayta urinib ko'ring.");
 });
