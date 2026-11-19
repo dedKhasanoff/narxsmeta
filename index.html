@@ -106,7 +106,7 @@ button{font:inherit;border:0;border-radius:10px;padding:11px 14px;cursor:pointer
     <div style="color:var(--mut);font-size:12px">Hujjatlarni saytda saqlash (QR tekshiruvi uchun) faqat egasi kirganda ishlaydi.</div>
     <label>Email</label><input id="lemail" type="email" autocomplete="username">
     <label>Parol</label><input id="lpass" type="password" autocomplete="current-password">
-    <div class="row" style="margin-top:10px"><button class="btn2" id="lbtn">Kirish</button></div>
+    <div class="row" style="margin-top:10px"><button class="btn2" id="lbtn">Kirish</button><button class="btn3" id="lout" style="display:none">Chiqish</button></div>
     <div class="msg" id="lstat"></div>
   </div>
 
@@ -131,7 +131,8 @@ button{font:inherit;border:0;border-radius:10px;padding:11px 14px;cursor:pointer
 (function(){
 var CFG={url:"https://ddjhqiqdlzaqfzonybed.supabase.co",key:"sb_publishable_FLo64-YHc66chH3wNkBPHQ_jwVhxMJY"}; // README / sozlash qo'llanmasiga qarang
 var CFG_OK=CFG.url.indexOf("https://")===0&&CFG.key.indexOf("BU_YERGA")<0;
-var TOKEN=null;try{TOKEN=sessionStorage.getItem("nn_tok")}catch(e){}
+// Kirish ma'lumoti shu qurilmada saqlanadi va muddati tugasa avtomatik yangilanadi
+var AUTH=null;try{AUTH=JSON.parse(localStorage.getItem("nn_auth")||"null")}catch(e){}
 function hdr(tok){var h={"apikey":CFG.key,"Content-Type":"application/json"};var b=tok||(CFG.key.indexOf("eyJ")===0?CFG.key:null);if(b)h["Authorization"]="Bearer "+b;return h}
 var $=function(id){return document.getElementById(id)};
 var KEY="narxnoma_v1";
@@ -288,37 +289,67 @@ function buildPdf(rid){
   return doc;
 }
 
+function setAuth(j){AUTH={at:j.access_token,rt:j.refresh_token,exp:j.expires_at||(Math.floor(Date.now()/1000)+(j.expires_in||3600))};try{localStorage.setItem("nn_auth",JSON.stringify(AUTH))}catch(x){}}
+function clearAuth(){AUTH=null;try{localStorage.removeItem("nn_auth");sessionStorage.removeItem("nn_tok")}catch(x){}}
+function loginUi(){
+  $("lout").style.display=AUTH?"":"none";
+  $("lstat").textContent=AUTH?"Kirgansiz. PDF'lar saqlanadi va QR kod bilan chiqadi.":"Kirilmagan: PDF QR kodsiz chiqadi.";
+}
 async function doLogin(){
   var e=$("lemail").value.trim(),p=$("lpass").value;
   var r=await fetch(CFG.url+"/auth/v1/token?grant_type=password",{method:"POST",headers:hdr(null),body:JSON.stringify({email:e,password:p})});
   var j=await r.json();
   if(!r.ok)throw new Error(j.error_description||j.msg||"Kirish muvaffaqiyatsiz");
-  TOKEN=j.access_token;try{sessionStorage.setItem("nn_tok",TOKEN)}catch(x){}
+  setAuth(j);
+}
+async function refreshAuth(){
+  if(!AUTH||!AUTH.rt)return false;
+  try{
+    var r=await fetch(CFG.url+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:hdr(null),body:JSON.stringify({refresh_token:AUTH.rt})});
+    if(r.ok){setAuth(await r.json());return true}
+    if(r.status===400||r.status===401||r.status===403)clearAuth(); // sessiya bekor qilingan
+  }catch(x){}
+  return false;
+}
+async function getToken(){
+  if(!AUTH)return null;
+  if((AUTH.exp||0)-60<Date.now()/1000)await refreshAuth();
+  return AUTH?AUTH.at:null;
 }
 $("lbtn").addEventListener("click",async function(){
   $("lstat").textContent="";
   if(!CFG_OK){$("lstat").textContent="Avval sayt sozlanmagan (SUPABASE kalitlari kiritilmagan).";return}
-  try{await doLogin();$("lstat").textContent="Kirdingiz. Endi hujjatlar saqlanadi.";$("lpass").value=""}catch(e){$("lstat").textContent="Xato: "+e.message}
+  try{await doLogin();$("lpass").value="";loginUi();msg("")}catch(e){$("lstat").textContent="Xato: "+e.message}
 });
-if(TOKEN)$("lstat").textContent="Kirgansiz.";
+$("lout").addEventListener("click",function(){clearAuth();loginUi()});
+loginUi();
+// Saqlaydi; muvaffaqiyatli bo'lsa null, aks holda xato sababini qaytaradi
 async function saveRecord(rec){
-  if(!CFG_OK||!TOKEN)return false;
-  var r=await fetch(CFG.url+"/rest/v1/docs",{method:"POST",headers:Object.assign(hdr(TOKEN),{"Prefer":"return=minimal"}),body:JSON.stringify({id:rec.id,data:rec})});
-  if(r.status===401){TOKEN=null;try{sessionStorage.removeItem("nn_tok")}catch(x){}}
-  return r.ok;
+  if(!CFG_OK)return"sayt sozlanmagan";
+  var tok=await getToken();
+  if(!tok)return"tizimga kirilmagan (pastdagi \"Egasi uchun kirish\" bo'limidan kiring)";
+  var send=function(t){return fetch(CFG.url+"/rest/v1/docs",{method:"POST",headers:Object.assign(hdr(t),{"Prefer":"return=minimal"}),body:JSON.stringify({id:rec.id,data:rec})})};
+  var r=await send(tok);
+  if(r.status===401&&await refreshAuth())r=await send(AUTH.at);
+  if(r.ok)return null;
+  if(r.status===401){clearAuth();loginUi();return"kirish muddati tugagan, qayta kiring"}
+  var t="";try{var j=await r.json();t=j.message||j.msg||""}catch(x){}
+  return"server xatosi "+r.status+(t?": "+t:"");
 }
 $("pdf").addEventListener("click",async function(){
   msg("");
-  var doc,rid=newId(),stored=false;
+  var doc,rid=newId(),err=null;
   var rec={id:rid,type:S.dtype,no:S.dno,date:S.ddate,time:S.dtime,firm:{name:S.fname,phone:S.fphone,addr:S.faddr},
     client:{name:S.cname,phone:S.cphone,addr:S.caddr},
     items:S.items.filter(function(i){return i.name||(+i.price)}).map(function(i){return{name:String(i.name||""),unit:String(i.unit||""),qty:+i.qty||0,price:+i.price||0}}),
     total:total(),createdAt:new Date().toISOString()};
-  try{stored=await saveRecord(rec)}catch(e){stored=false}
+  msg("Saqlanmoqda...");
+  try{err=await saveRecord(rec)}catch(e){err="internetga ulanib bo'lmadi"}
+  var stored=!err;
   try{doc=buildPdf(stored?rid:null)}catch(e){msg("Xatolik: "+e.message);return}
   var fname="narxnoma_"+(String(S.ddate||today()).replace(/[^0-9A-Za-z]+/g,"-").replace(/^-|-$/g,"")||"hujjat")+(stored?"_"+rid:"")+".pdf";
   try{doc.save(fname)}catch(e){msg("Yuklab bo'lmadi: "+e.message);return}
-  msg(stored?"Tayyor va saytda saqlandi: "+fname:"PDF tayyor, lekin saytda SAQLANMADI (QR kodsiz). Yuqoridagi \"Kirish\" bo'limidan kiring va qayta urinib ko'ring.");
+  msg(stored?"Tayyor, saytda saqlandi, QR kod bilan: "+fname:"PDF QR KODSIZ chiqdi, chunki hujjat saqlanmadi: "+err+".");
 });
 
 // ---- tekshiruv sahifasi ----
