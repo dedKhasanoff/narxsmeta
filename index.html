@@ -53,6 +53,7 @@ button{font:inherit;border:0;border-radius:10px;padding:11px 14px;cursor:pointer
 <div class="wrap" id="vview" style="display:none"></div>
 <div class="wrap" id="app">
   <h1>Narxnoma yaratuvchi</h1>
+  <div id="editor" style="display:none">
   <div class="sub">Mahsulot, soni va narxni kiriting — summa va jami o'zi hisoblanadi. Natija A5 PDF.</div>
 
   <div class="card">
@@ -100,12 +101,15 @@ button{font:inherit;border:0;border-radius:10px;padding:11px 14px;cursor:pointer
     <div class="sheet" id="sheet"></div>
     <div style="color:var(--mut);font-size:12px;margin-top:8px;text-align:center">PDF'da pastda QR kod, tekshiruv kodi, imzo va muhr uchun joy chiqadi.</div>
   </div>
+  </div>
 
   <div class="card">
     <h2>Egasi uchun kirish</h2>
-    <div style="color:var(--mut);font-size:12px">Hujjatlarni saytda saqlash (QR tekshiruvi uchun) faqat egasi kirganda ishlaydi.</div>
+    <div id="lform">
+    <div style="color:var(--mut);font-size:12px">Narxnoma tuzish faqat sayt egasi uchun. Kirish uchun email va parolingizni kiriting.</div>
     <label>Email</label><input id="lemail" type="email" autocomplete="username">
     <label>Parol</label><input id="lpass" type="password" autocomplete="current-password">
+    </div>
     <div class="row" style="margin-top:10px"><button class="btn2" id="lbtn">Kirish</button><button class="btn3" id="lout" style="display:none">Chiqish</button></div>
     <div class="msg" id="lstat"></div>
   </div>
@@ -117,7 +121,7 @@ button{font:inherit;border:0;border-radius:10px;padding:11px 14px;cursor:pointer
   </div>
 </div>
 
-<div class="bar" id="bar"><div class="in">
+<div class="bar" id="bar" style="display:none"><div class="in">
   <button class="btn3" id="reset">Tozalash</button>
   <button class="btn" id="pdf">A5 PDF yuklab olish</button>
 </div><div class="msg" id="msg" style="max-width:720px;margin:4px auto 0"></div></div>
@@ -293,7 +297,10 @@ function setAuth(j){AUTH={at:j.access_token,rt:j.refresh_token,exp:j.expires_at|
 function clearAuth(){AUTH=null;try{localStorage.removeItem("nn_auth");sessionStorage.removeItem("nn_tok")}catch(x){}}
 function loginUi(){
   $("lout").style.display=AUTH?"":"none";
-  $("lstat").textContent=AUTH?"Kirgansiz. PDF'lar saqlanadi va QR kod bilan chiqadi.":"Kirilmagan: PDF QR kodsiz chiqadi.";
+  $("lbtn").style.display=AUTH?"none":"";
+  $("lform").style.display=AUTH?"none":"";
+  $("lstat").textContent=AUTH?"Kirgansiz. PDF'lar saqlanadi va QR kod bilan chiqadi.":"";
+  if(!/^#check-/.test(location.hash))route();
 }
 async function doLogin(){
   var e=$("lemail").value.trim(),p=$("lpass").value;
@@ -338,6 +345,7 @@ async function saveRecord(rec){
 }
 $("pdf").addEventListener("click",async function(){
   msg("");
+  if(!AUTH){loginUi();return}
   var doc,rid=newId(),err=null;
   var rec={id:rid,type:S.dtype,no:S.dno,date:S.ddate,time:S.dtime,firm:{name:S.fname,phone:S.fphone,addr:S.faddr},
     client:{name:S.cname,phone:S.cphone,addr:S.caddr},
@@ -370,7 +378,7 @@ async function showVerify(id){
       if(!r.ok)err=true;else{var j=await r.json();rec=(j&&j.items)?j:null}
     }
   }catch(e){err=true}
-  var back='<div style="margin-top:12px"><button class="btn3" id="vback">&larr; Orqaga</button></div>';
+  var back=AUTH?'<div style="margin-top:12px"><button class="btn3" id="vback">&larr; Orqaga</button></div>':''; // faqat egasiga
   if(err){v.innerHTML='<div class="card vbad"><h2>Tekshirish</h2><div>Ma\'lumotlar bazasiga ulanib bo\'lmadi. Keyinroq urinib ko\'ring.</div>'+back+'</div>'}
   else if(!rec){v.innerHTML='<div class="card vbad"><h2>Tekshirish</h2><div><b>Bunday hujjat topilmadi:</b> '+esc(id)+'<br>Kod noto\'g\'ri yoki hujjat bu saytdan chiqarilmagan.</div>'+back+'</div>'}
   else{
@@ -388,7 +396,9 @@ function route(){
   var h=(location.hash||"").replace(/^#/,"");
   var m=/^check-([A-Za-z0-9]{4,16})$/.exec(h);
   if(m){$("app").style.display="none";$("bar").style.display="none";$("vview").style.display="";showVerify(m[1].toUpperCase())}
-  else{$("vview").style.display="none";$("app").style.display="";$("bar").style.display=""}
+  else{$("vview").style.display="none";$("app").style.display="";
+    var own=!!AUTH; // tahrirlash faqat kirgan egaga ko'rinadi
+    $("editor").style.display=own?"":"none";$("bar").style.display=own?"":"none"}
 }
 window.addEventListener("hashchange",route);
 $("chkbtn").addEventListener("click",function(){var v=$("chk").value.trim().replace(/[^A-Za-z0-9]/g,"");if(v)location.hash="check-"+v});
