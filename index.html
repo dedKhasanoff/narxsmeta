@@ -212,7 +212,8 @@ function preview(){
 function msg(t){$("msg").textContent=t||""}
 function clean(s){return String(s==null?"":s).replace(/[‘’ʻʼ`]/g,"'")}
 
-function pageUrl(){return location.href.split("#")[0]}
+var QR_BASE="https://glvkuiops.netlify.app/"; // QR doim shu manzilga olib boradi (bo'sh qoldirilsa joriy sahifa)
+function pageUrl(){return QR_BASE||location.href.split("#")[0]}
 function newId(){var a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",s="";var r=new Uint32Array(8);crypto.getRandomValues(r);for(var i=0;i<8;i++)s+=a[r[i]%a.length];return s}
 function buildPdf(rid){
   var J=window.jspdf&&window.jspdf.jsPDF;if(!J)throw new Error("PDF kutubxonasi yuklanmadi");
