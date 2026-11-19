@@ -62,8 +62,11 @@ button{font:inherit;border:0;border-radius:10px;padding:11px 14px;cursor:pointer
         <select id="dtype"><option>NARXNOMA</option><option>HISOB-KITOB</option><option>TAKLIF</option></select></div>
       <div><label>Raqami (ixtiyoriy)</label><input id="dno" placeholder="masalan 12"></div>
     </div>
-    <label>Sana (o'zingiz yozasiz)</label>
-    <div class="row"><input id="ddate" placeholder="masalan 19.11.2026" autocomplete="off" style="flex:1;min-width:0"><button class="btn3" id="dtoday" type="button">Bugun</button></div>
+    <div class="g2">
+      <div><label>Sana (o'zingiz yozasiz)</label><input id="ddate" placeholder="masalan 19.11.2026" autocomplete="off"></div>
+      <div><label>Vaqti (ixtiyoriy)</label><input id="dtime" placeholder="masalan 14:30" autocomplete="off"></div>
+    </div>
+    <div class="row" style="margin-top:8px"><button class="btn3" id="dtoday" type="button">Hozirgi sana va vaqt</button></div>
   </div>
 
   <div class="card">
@@ -142,10 +145,12 @@ var DEFAULT_ITEMS=[
  {name:"knaf rulon-16.6kv",unit:"dona",qty:1,price:195000},
  {name:"Padves vero",unit:"dona",qty:100,price:1300}
 ];
-var S={dtype:"NARXNOMA",dno:"",ddate:"",fname:"",fphone:"",faddr:"",cname:"",cphone:"",caddr:"",items:DEFAULT_ITEMS.slice().map(function(x){return Object.assign({},x)}),prods:{}};
+var S={dtype:"NARXNOMA",dno:"",ddate:"",dtime:"",fname:"",fphone:"",faddr:"",cname:"",cphone:"",caddr:"",items:DEFAULT_ITEMS.slice().map(function(x){return Object.assign({},x)}),prods:{}};
 try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);Object.keys(S).forEach(function(k){if(p[k]!==undefined)S[k]=p[k]})}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function dstr(v){if(!v)return"";var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v);return m?m[3]+"."+m[2]+"."+m[1]:v}
+function nowTime(){var d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
+function when(date,time){return [dstr(date),time].filter(Boolean).join("  ")}
 function today(){var d=new Date();return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear()}
 if(/^\d{4}-\d{2}-\d{2}$/.test(S.ddate||""))S.ddate=dstr(S.ddate); // eski (kalendar) formatini o'tkazish
 if(!S.ddate)S.ddate=today();
@@ -153,9 +158,9 @@ function fmt(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function total(){return S.items.reduce(function(s,i){return s+(+i.qty||0)*(+i.price||0)},0)}
 
-var fields=["dtype","dno","ddate","fname","fphone","faddr","cname","cphone","caddr"];
+var fields=["dtype","dno","ddate","dtime","fname","fphone","faddr","cname","cphone","caddr"];
 fields.forEach(function(f){var el=$(f);el.value=S[f];el.addEventListener("input",function(){S[f]=el.value;save();preview()})});
-$("dtoday").addEventListener("click",function(){S.ddate=today();$("ddate").value=S.ddate;save();preview()});
+$("dtoday").addEventListener("click",function(){S.ddate=today();S.dtime=nowTime();$("ddate").value=S.ddate;$("dtime").value=S.dtime;save();preview()});
 
 function rememberProd(it){if(it.name&&(+it.price)>0){S.prods[it.name.trim()]={unit:it.unit,price:+it.price}}}
 function fillDatalist(){$("prods").innerHTML=Object.keys(S.prods).map(function(n){return'<option value="'+esc(n)+'">'}).join("")}
@@ -204,7 +209,7 @@ function preview(){
     return"<tr><td class='c'>"+(n+1)+"</td><td>"+esc(i.name)+"</td><td class='c'>"+esc(i.unit)+"</td><td class='c'>"+esc(i.qty)+"</td><td class='r'>"+fmt(+i.price||0)+"</td><td class='r'>"+fmt((+i.qty||0)*(+i.price||0))+"</td></tr>"}).join("");
   var h="";
   if(S.fname||S.fphone||S.faddr)h+="<div class='firm'>"+(S.fname?"<b>"+esc(S.fname)+"</b><br>":"")+(S.fphone?"Tel: "+esc(S.fphone)+"<br>":"")+(S.faddr?esc(S.faddr):"")+"</div>";
-  h+="<h3>"+esc(S.dtype)+(S.dno?" № "+esc(S.dno):"")+"</h3><div class='d'>"+esc(dstr(S.ddate))+"</div>";
+  h+="<h3>"+esc(S.dtype)+(S.dno?" № "+esc(S.dno):"")+"</h3><div class='d'>"+esc(when(S.ddate,S.dtime))+"</div>";
   if(S.cname||S.cphone||S.caddr)h+="<div class='party'>Xaridor: "+esc(S.cname)+(S.cphone?"<br>Tel: "+esc(S.cphone):"")+(S.caddr?"<br>Manzil: "+esc(S.caddr):"")+"</div>";
   h+="<table><tr><th>№</th><th>Mahsulot</th><th>Birlik</th><th>Soni</th><th>Narxi</th><th>Summa</th></tr>"+rows+
      "<tr><th></th><th style='text-align:left'>Jami:</th><th></th><th></th><th></th><th style='text-align:right'>"+fmt(total())+"</th></tr></table>"+
@@ -230,7 +235,7 @@ function buildPdf(rid){
   doc.setFont("helvetica","bold");doc.setFontSize(15);
   doc.text(clean(S.dtype)+(S.dno?" No "+clean(S.dno):""),74,y,{align:"center"});y+=5;
   doc.setFont("helvetica","normal");doc.setFontSize(8.5);
-  doc.text(clean(dstr(S.ddate)),74,y,{align:"center"});y+=6;
+  doc.text(clean(when(S.ddate,S.dtime)),74,y,{align:"center"});y+=6;
   if(S.cname||S.cphone||S.caddr){
     var lines=[];if(S.cname)lines.push("Xaridor: "+clean(S.cname));if(S.cphone)lines.push("Tel: "+clean(S.cphone));if(S.caddr)lines.push("Manzil: "+clean(S.caddr));
     lines.forEach(function(l){doc.text(l,L,y);y+=4});y+=2;
@@ -305,7 +310,7 @@ async function saveRecord(rec){
 $("pdf").addEventListener("click",async function(){
   msg("");
   var doc,rid=newId(),stored=false;
-  var rec={id:rid,type:S.dtype,no:S.dno,date:S.ddate,firm:{name:S.fname,phone:S.fphone,addr:S.faddr},
+  var rec={id:rid,type:S.dtype,no:S.dno,date:S.ddate,time:S.dtime,firm:{name:S.fname,phone:S.fphone,addr:S.faddr},
     client:{name:S.cname,phone:S.cphone,addr:S.caddr},
     items:S.items.filter(function(i){return i.name||(+i.price)}).map(function(i){return{name:String(i.name||""),unit:String(i.unit||""),qty:+i.qty||0,price:+i.price||0}}),
     total:total(),createdAt:new Date().toISOString()};
@@ -342,7 +347,7 @@ async function showVerify(id){
     var firm=rec.firm&&(rec.firm.name||rec.firm.phone||rec.firm.addr)?"<div>"+esc([rec.firm.name,rec.firm.phone,rec.firm.addr].filter(Boolean).join(", "))+"</div>":"";
     var cl=rec.client&&(rec.client.name||rec.client.phone||rec.client.addr)?"<div>Xaridor: "+esc([rec.client.name,rec.client.phone,rec.client.addr].filter(Boolean).join(", "))+"</div>":"";
     v.innerHTML='<div class="card vok"><h2>Hujjat topildi</h2><div style="font-size:13px;color:var(--mut);margin-bottom:8px">Quyidagi ma\'lumotlarni qog\'ozdagi nusxa bilan solishtiring. Mos kelmasa, qog\'oz o\'zgartirilgan.</div>'+
-      '<div><b>'+esc(rec.type)+(rec.no?" № "+esc(rec.no):"")+'</b> &middot; '+esc(dstr(rec.date))+' &middot; kod: '+esc(rec.id)+'</div>'+firm+cl+
+      '<div><b>'+esc(rec.type)+(rec.no?" № "+esc(rec.no):"")+'</b> &middot; '+esc(when(rec.date,rec.time))+' &middot; kod: '+esc(rec.id)+'</div>'+firm+cl+
       '<div style="overflow-x:auto;margin-top:10px"><table class="vt"><tr><th>№</th><th>Mahsulot</th><th>Birlik</th><th>Soni</th><th>Narxi</th><th>Summa</th></tr>'+rows+'</table></div>'+
       '<div class="total" style="margin-top:10px"><span>Jami:</span><span>'+fmt(rec.total)+' so\'m</span></div>'+back+'</div>';
   }
