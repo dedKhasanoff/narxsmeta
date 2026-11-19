@@ -1,6 +1,6 @@
 # Narxnoma sayti (A5 PDF + QR tekshiruv)
 
-QR tekshiruv manzili: `index.html` dagi `QR_BASE` (hozir https://glvkuiops.netlify.app/). Sayt GitHub Pages'da ham ishlaydi: https://dedkhasanoff.github.io/narxsmeta/
+QR tekshiruv manzili: `index.html` dagi `QR_BASE` (hozir https://glvkuiopswfhsfnsgnetnsfbsgbwtbsgnetnw.netlify.app/). Sayt GitHub Pages'da ham ishlaydi: https://dedkhasanoff.github.io/narxsmeta/
 
 Bitta fayldan iborat statik sayt (`index.html`). Foydalanuvchi mahsulot, soni va narxni kiritadi, sayt summalarni hisoblaydi va A5 formatda PDF beradi. Har bir PDF'da noyob tekshiruv kodi va QR kod bor; QR skaner qilinsa, asl hujjat (mahsulotlar, narxlar, jami) tekshiruv sahifasida ochiladi. Bu hujjatni o'zgartirib soxtalashtirishni qiyinlashtiradi.
 
